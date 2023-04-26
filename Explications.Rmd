@@ -1,0 +1,335 @@
+---
+title: "Explications Turtle Trading"
+author: "Tien-Thinh"
+date: "2023-04-22"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+# Load packages
+library(quantmod) 
+library(TTR)
+library(tibble)
+library(ggplot2) 
+library(reshape2)
+library(purrr)
+library(dplyr)
+```
+
+# Importation des données
+
+Nous utilisons les données $BTC-USD$ de `quantmod`.\
+Et pour appliquer la stratégie Turtle nous ajoutons :\
+- Les Chaines de Donchian 20 jours (blanc, signal d'ouverture)\
+- Les Chaines de Donchian 10 jours (bleu, signal de clôture)\
+- L'Average True Range (ATR) 10 jours
+
+```{r, fig.keep="last"}
+# getSymbols BTC-USD into df
+df <- getSymbols(Symbols = "BTC-USD", auto.assign = FALSE, from=as.Date("2020-01-01"), to=as.Date("2020-06-01"))
+# Create chart Visualisation 
+chartSeries(df, up.col="green",dn.col="red")
+# Create Technical Analysis
+dc20 <- DonchianChannel(HL(df), n=20)[,c("high", "low")]
+dc10 <- DonchianChannel(HL(df), n=10)[,c("high", "low")]
+atr <- ATR(HLC(df), n=14)$atr
+# Add TA to chart
+addTA(dc20, legend="Donchian 20", on=1, col=c("white", "white"))
+addTA(dc10, legend="Donchian 10", on=1, col=c("deepskyblue", "deepskyblue"))
+addTA(atr, legend="ATR", col="white")
+```
+  
+# Création des ordres
+Nous travaillons sur les données entre jenvier 2020 et janvier 2023.  
+```{r, warning = FALSE}
+# getSymbols BTC-USD into df  
+df <- getSymbols(Symbols = "BTC-USD", auto.assign = FALSE, from=as.Date("2020-01-01"), to=as.Date("2023-01-01"))
+
+# fonction créant les trades
+trades <- function(df, O=20, C=10, A=14) {
+  # Système 1 : 20jours, 10jours
+  # Système 2 : 55jours, 20jours
+  # Create TA
+  dcO <- DonchianChannel(HL(df), n=O)
+  dcC <- DonchianChannel(HL(df), n=C)
+  atr <- ATR(HLC(df), n=A)$atr
+  
+  # Create signal data.frame
+  signal <- data.frame(  
+    (Hi(df) >= dcO$high),  
+    (Lo(df) <= dcO$low),  
+    (Lo(df) <= dcC$low),
+    (Hi(df) >= dcC$high)
+  )
+  colnames(signal) <- c("buyO", "sellO", "buyC", "sellC")
+  tail(signal)
+  n <- nrow(signal)
+  
+  # Initialize result data.frame of positions
+  result = data.frame(matrix(nrow = n, ncol = 8)) 
+  colnames(result) <- c("bRISK", "bEARN", "bDATE", "bDURA", "sRISK", "sEARN", "sDATE", "sDURA")
+  rownames(result) <- rownames(signal)
+  
+  # Get profit if price1 < price2 and is a buy it is profitable
+  getProfit = function(i1, i2, buy=TRUE, HL=TRUE) {
+    price1 <- as.double(Cl(df[i1]))
+    price2 <- as.double(Cl(df[i2]))
+    if (buy) {
+      if (HL) {
+        price1 <- as.double(Hi(df[i1]))
+        price2 <- as.double(Lo(df[i2]))
+      }
+      return (price2/price1)
+    } else {
+      if (HL) {
+        price1 <- as.double(Lo(df[i1]))
+        price2 <- as.double(Hi(df[i2]))
+      }
+      return (price1/price2)
+    }
+  }
+  
+  # Get risk
+  getRisk = function(i, buy=TRUE) {
+    if (buy) {
+      PRICE_val = Cl(df[i])
+      SL_val = dcC$low[i]
+      ATR_val = atr[i]
+      return ((PRICE_val-SL_val)/ATR_val)
+    } else {
+      PRICE_val = Cl(df[i])
+      SL_val = dcC$high[i]
+      ATR_val = atr[i]
+      return ((SL_val-PRICE_val)/ATR_val)
+    }
+  }
+  
+  # Filling result
+  bDATE <- NA
+  sDATE <- NA
+  for (i in n:(O+1)) {
+    if (!is.na(bDATE) && signal$buyO[i]) {
+      result[i, "bDATE"] <- bDATE
+      result[i, "bDURA"] <- bDATE-i
+      result[i, "bEARN"] <- getProfit(i, bDATE, buy=TRUE)
+      result[i, "bRISK"] <- getRisk(i, buy=TRUE)
+    } 
+    if (!is.na(sDATE) && signal$sellO[i]) {
+      result[i, "sDATE"] <- sDATE
+      result[i, "sDURA"] <- sDATE-i
+      result[i, "sEARN"] <- getProfit(i, sDATE, buy=FALSE)
+      result[i, "sRISK"] <- getRisk(i, buy=FALSE)
+    } 
+    if (signal$buyC[i]) {
+      bDATE <- i
+    }
+    if (signal$sellC[i]) {
+      sDATE <- i
+    }
+  }
+  return (result)
+}
+result <- df %>% 
+  trades(O=55, C=20, A=14)
+
+# COUNT
+result %>% 
+  filter(!is.na(bEARN)) %>% 
+  count() %>% 
+  as.double() %>% 
+  paste("Au total", ., "BUY") %>% 
+  print()
+
+result %>% 
+  filter(!is.na(bEARN)) %>% 
+  select(bDATE) %>% 
+  n_distinct() %>% 
+  as.double() %>% 
+  paste("Au total", ., "BUY distinct") %>% 
+  print()
+
+result %>% 
+  filter(!is.na(sEARN)) %>% 
+  count() %>% 
+  as.double() %>% 
+  paste("Au total", ., "SELL") %>% 
+  print()
+
+result %>% 
+  filter(!is.na(sEARN)) %>% 
+  select(sDATE) %>% 
+  n_distinct() %>% 
+  as.double() %>% 
+  paste("Au total", ., "SELL distinct") %>% 
+  print()
+```
+
+# Gains potentiels
+```{r, warning = FALSE}
+# CUMPROD
+getCumProd <- function(result, factor=1, fees=0.0006) {
+  return (result %>%
+    mutate(
+      bEARN=(bEARN-fees) %>% na.fill(fill=1), sEARN=(sEARN-fees) %>% na.fill(fill=1)result,
+      bCUMUL = cumprod(bEARN), sCUMUL = cumprod(sEARN),
+      bEARNpow = ((bEARN-1)*bRISK/factor+1), sEARNpow = ((sEARN-1)*sRISK/factor+1),
+      bEARNpow = na.fill(bEARNpow, 1), sEARNpow = na.fill(sEARNpow, 1),
+      bCUMULpow = cumprod(bEARNpow), sCUMULpow = cumprod(sEARNpow)
+    )
+  )
+}
+result <- result %>% getCumProd()
+# Reshape data from wide to long format
+x_long <- result %>% 
+  rowid_to_column("x") %>% 
+  melt(id.vars ="x", measure.vars = c("sCUMUL", "bCUMUL"))
+ggplot(x_long, aes(x=x, y = value)) +
+  geom_point(aes(color = variable)) +
+  scale_y_continuous(trans='log10') +
+  xlab("Date") +
+  ylab("Returns (échelle log10)") 
+
+result[nrow(result), c("sCUMUL", "bCUMUL")] %>% 
+  paste("Profit : ", .) %>% 
+  knitr::kable()
+```
+
+# Durée des trades
+```{r, warning = FALSE}
+# Durée moyenne d'un trade
+result %>% 
+  summarise(
+    meanDuraSELL=mean(sDURA, na.rm=TRUE), 
+    minDuraSELL=min(sDURA, na.rm=TRUE), 
+    maxDuraSELL=max(sDURA, na.rm=TRUE), 
+    meanDuraBUY=mean(bDURA, na.rm=TRUE),
+    minDuraBUY=min(bDURA, na.rm=TRUE),
+    maxDuraBUY=max(bDURA, na.rm=TRUE)
+  ) %>% 
+  knitr::kable()
+```
+
+# Nombre de trade simultanés
+```{r, warning = FALSE}
+# nb max empilement
+result %>% 
+  filter(!is.na(bDATE)) %>% 
+  group_by(bDATE) %>% 
+  count() %>% 
+  data.frame() %>% 
+  summarise(bMean=mean(n), bMedian=median(n), bMax=max(n), bMin=min(n)) %>% 
+  knitr::kable()
+
+result %>% 
+  filter(!is.na(sDATE)) %>% 
+  group_by(sDATE) %>% 
+  count() %>% 
+  data.frame() %>% 
+  summarise(sMean=mean(n), sMedian=median(n), sMax=max(n), sMin=min(n)) %>% 
+  knitr::kable()
+```
+
+
+# Choix du meilleur facteur risk 3
+```{r, warning = FALSE}
+# Curve earnpow
+x <-data.frame(x=c((20:100)/10))
+mapGetCumProd <- function(result, factor, col) {
+  aux <- function(x) {
+    getCumProd(result, x) %>%  
+      select(col) %>% 
+      slice(n()) %>% 
+      as.double()
+  }
+  return (map_dbl(factor, aux))
+}
+x <- x %>% 
+  mutate(
+    yb=result %>% 
+      mapGetCumProd(x, "bCUMULpow"),
+    ys=result %>% 
+      mapGetCumProd(x, "sCUMULpow"),
+    yBoth=yb*ys
+  )
+# Reshape data from wide to long format
+x_long <- melt(x, id.vars = "x", measure.vars = c("ys", "yb", "yBoth"))
+ggplot(x_long, aes(x = x, y = value)) +
+  geom_point(aes(color = variable)) +
+  xlab("Factor of RISK, plus il est petit, plus on prend de risque") +
+  ylab("Returns") +
+  geom_vline(xintercept = x[which.max(x$ys), "x"], linetype = "dashed", color = 2) +
+  geom_vline(xintercept = x[which.max(x$yb), "x"], linetype = "dashed", color = 3) +
+  geom_vline(xintercept = x[which.max(x$yBoth), "x"], linetype = "dashed", color = 4)
+```
+
+# Gain potentiel à facteur risk 3
+```{r, warning = FALSE}
+# CUMPROD with POW
+result <- result %>% 
+  getCumProd(factor=5)
+# Reshape data from wide to long format
+x_long <- result %>% 
+  rowid_to_column("x") %>% 
+  melt(id.vars ="x", measure.vars = c("sCUMULpow", "bCUMULpow"))
+ggplot(x_long, aes(x=x, y = value)) +
+  geom_point(aes(color = variable)) +
+  scale_y_continuous(trans='log10') +
+  xlab("Date") +
+  ylab("Returns (échelle log10)") 
+
+result[nrow(result), c("sCUMULpow", "bCUMULpow")] %>% 
+  paste("Profit : ", .) %>% 
+  knitr::kable()
+```
+
+
+
+# Gain trade Unique
+```{r}
+result %>% 
+  group_by(bDATE) %>% 
+  slice(1) %>% 
+  data.frame() %>% 
+  select(bEARN) %>% 
+  prod()
+
+result %>% 
+  select(bEARN) %>% 
+  prod()
+```
+
+# Gain trade simultanés additionés
+
+# Alpha convexité
+```{r}
+# result %>% 
+#   rownames_to_column(var = "month") %>% 
+#   mutate(month=substr(month, 1, 7)) %>% 
+#   group_by(month) 
+# %>% 
+```
+
+
+# Perte maximale à supporter
+```{r, warning = FALSE}
+# perte max
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,8 @@
+"0",""
+"0","result %>% "
+"0","  filter(!is.na(sDATE)) %>% "
+"0","  group_by(sDATE) %>% "
+"0","  count() %>% "
+"0","  data.frame() %>% "
+"0","  summarise(sMean=mean(n), sMedian=median(n), sMax=max(n), sMin=min(n)) %>% "
+"0","  knitr::kable()"

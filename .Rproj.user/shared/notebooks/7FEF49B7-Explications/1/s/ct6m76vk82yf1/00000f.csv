@@ -1,0 +1,4 @@
+"0","# getSymbols BTC-USD into df"
+"0","df <- getSymbols(Symbols = ""BTC-USD"", auto.assign = FALSE, from=as.Date(""2020-01-01""), to=as.Date(""2020-06-01""))"
+"0","# Create chart Visualisation "
+"0","chartSeries(df, up.col=""green"",dn.col=""red"")"

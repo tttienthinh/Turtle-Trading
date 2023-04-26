@@ -1,0 +1,11 @@
+"0","result %>% 
+  group_by(bDATE) %>% 
+  slice(1) %>% 
+  data.frame() %>% 
+  select(bEARN) %>% 
+  prod()
+"
+"1","[1]"
+"1"," 1.617414"
+"1","
+"

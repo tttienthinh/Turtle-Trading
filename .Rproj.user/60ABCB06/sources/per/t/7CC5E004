@@ -1,0 +1,33 @@
+{
+    "id": "7CC5E004",
+    "path": "~/Documents/Programmation/Turtle/Explications.Rmd",
+    "project_path": "Explications.Rmd",
+    "type": "r_markdown",
+    "hash": "324083622",
+    "contents": "",
+    "dirty": false,
+    "created": 1682338022066.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "tempName": "Untitled1",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "296,0",
+        "scrollLine": "289",
+        "rmdVisualMode": "false",
+        "rmdVisualCollapsedChunks": "",
+        "rmdVisualModeLocation": "1154:458",
+        "rmdVisualWrapConfigured": "true",
+        "docOutlineVisible": "1",
+        "last_setup_crc32": "dfa9b1f2b8e3917"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1682348686,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1682348686866,
+    "read_only": false,
+    "read_only_alternatives": []
+}

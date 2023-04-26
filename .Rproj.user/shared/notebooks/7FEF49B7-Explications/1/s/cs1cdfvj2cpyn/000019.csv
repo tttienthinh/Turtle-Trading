@@ -1,0 +1,4 @@
+"0",""
+"0","result[nrow(result), c(""sCUMUL"", ""bCUMUL"")] %>% "
+"0","  paste(""Profit : "", .) %>% "
+"0","  knitr::kable()"

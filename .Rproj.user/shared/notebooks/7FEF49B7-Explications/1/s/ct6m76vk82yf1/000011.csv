@@ -1,0 +1,6 @@
+"0","# Create Technical Analysis"
+"0","dc20 <- DonchianChannel(HL(df), n=20)[,c(""high"", ""low"")]"
+"0","dc10 <- DonchianChannel(HL(df), n=10)[,c(""high"", ""low"")]"
+"0","atr <- ATR(HLC(df), n=14)$atr"
+"0","# Add TA to chart"
+"0","addTA(dc20, legend=""Donchian 20"", on=1, col=c(""white"", ""white""))"
