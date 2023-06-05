@@ -171,7 +171,7 @@ result %>%
 getCumProd <- function(result, factor=1, fees=0.0006) {
   return (result %>%
     mutate(
-      bEARN=(bEARN-fees) %>% na.fill(fill=1), sEARN=(sEARN-fees) %>% na.fill(fill=1)result,
+      bEARN=(bEARN-fees) %>% na.fill(fill=1), sEARN=(sEARN-fees) %>% na.fill(fill=1),
       bCUMUL = cumprod(bEARN), sCUMUL = cumprod(sEARN),
       bEARNpow = ((bEARN-1)*bRISK/factor+1), sEARNpow = ((sEARN-1)*sRISK/factor+1),
       bEARNpow = na.fill(bEARNpow, 1), sEARNpow = na.fill(sEARNpow, 1),
