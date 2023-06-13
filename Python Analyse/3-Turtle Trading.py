@@ -19,7 +19,7 @@ def donchian_channel(serie, n, lower):
 class TurtleTrading(Strategy):
     nO = 55
     nC = 20
-    factor = 9
+    factor = 1e2 # A travailler dssus
 
     def init(self):
         data = self.data
@@ -33,9 +33,9 @@ class TurtleTrading(Strategy):
         # print(len(self.trades))
         # print(type(self.dcO), type(self.dcC), self.dcC[-1], len(self.dcC))
         if self.dcO[-1] == self.data.High:
-            # size = (self.data.Close[-1]-self.dcC[-1])/(self.atr[-1]*self.factor)
-            size = 0.1
-            self.size.append(self.date[-1])
+            size = (self.data.Close[-1]-self.dcC[-1])/(self.atr[-1]*self.factor)
+            # size = 0.1
+            self.size.append(size)
             # print(size, self.data.Close[-1], self.dcC[-1], self.atr[-1], self.factor)
             self.buy(size=min(size, 0.99))
             print(self.dcC[-1])
@@ -46,8 +46,9 @@ class TurtleTrading(Strategy):
 
 
 
+
 data = yf.download(tickers='BTC-USD')
-bt = Backtest(data, TurtleTrading, commission=.00_06)
+bt = Backtest(data, TurtleTrading, commission=.00_06, cash=1e6)
 stats = bt.run()
 print(stats)
 bt.plot()
@@ -61,7 +62,7 @@ trades["DcC"] = [dcC[i] for i in trades.EntryBar]
 trades["DcC_ratio"] = trades.DcC / trades.EntryPrice
 equity = stats._equity_curve
 trades["equity"] = [equity.iloc[i] for i in trades.EntryBar]
-stats._strategy.size[:5]
+trades["size"] = stats._strategy.size[:5]
 len(trades)
 
 
@@ -77,4 +78,6 @@ plt.scatter(trades.Duration, trades.vanillaPNL, c=col) # Logarithmique ?
 plt.scatter(trades.DcC_ratio, trades.vanillaPNL, c=col)
 plt.scatter(trades.Size, trades.vanillaPNL, c=col) # Size > 15 sur de gagner ?
 plt.scatter(trades.Size, trades.ReturnPct, c=col)
+plt.scatter(trades.EntryPrice, trades.vanillaPNL, c=col)
+plt.scatter(trades.size, trades.vanillaPNL, c=col)
 plt.show()
