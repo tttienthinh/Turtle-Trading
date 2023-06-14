@@ -19,14 +19,13 @@ def donchian_channel(serie, n, lower):
 class TurtleTrading(Strategy):
     nO = 55
     nC = 20
-    factor = 1e2 # A travailler dssus
+    factor = 10 # A travailler dssus
 
     def init(self):
         data = self.data
         self.dcO = self.I(donchian_channel, data.High, self.nO, False)
         self.dcC = self.I(donchian_channel, data.Low, self.nC, True)
         self.atr = self.I(talib.ATR, data.High, data.Low, data.Close, 14)
-        self.date = self.I(lambda x: x, data.index)
         self.size = []
 
     def next(self):
@@ -38,7 +37,6 @@ class TurtleTrading(Strategy):
             self.size.append(size)
             # print(size, self.data.Close[-1], self.dcC[-1], self.atr[-1], self.factor)
             self.buy(size=min(size, 0.99))
-            print(self.dcC[-1])
             # self.buy(size=0.8)
         for trade in self.trades:
             if trade.is_long:
@@ -73,6 +71,7 @@ import numpy as np
 col = np.where(trades.vanillaPNL<1, "red", "green")
 col = np.where(trades.ReturnPct<0, "red", "green")
 #     Size  EntryBar  ExitBar    EntryPrice     ExitPrice           PnL  ReturnPct  EntryTime   ExitTime  Duration  vanillaPNL
+# Il faut mettre des show() après chaque plt.scatter
 plt.yscale("log")
 plt.scatter(trades.Duration, trades.vanillaPNL, c=col) # Logarithmique ?
 plt.scatter(trades.DcC_ratio, trades.vanillaPNL, c=col)
