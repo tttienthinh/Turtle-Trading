@@ -23,10 +23,10 @@ df["dcC"] = donchian_channel(df.Low,  nC, True)  # Chaine de Donchian inférieur
 df["atr"] = talib.ATR(df.High, df.Low, df.Close, 14) # ATR pas si important pour l'instant
 df.dropna(inplace=True)
 
-plt.plot(df.Close)
-plt.plot(df.dcO)
-plt.plot(df.dcC)
-plt.show()
+# plt.plot(df.Close)
+# plt.plot(df.dcO)
+# plt.plot(df.dcC)
+# plt.show()
 
 # Lire 
 # https://www.newtrading.fr/turtle-trading#h-quelles-sont-les-regles-du-turtle-trading
@@ -40,7 +40,19 @@ Out:
  - True, lorsqu'il faut revendre la position
  - False, le reste du temps
 """
+def detect_value_change(vector):
+    change_indices = np.where(np.diff(vector) != 0)[0]+1
+    A=np.zeros(len(vector))
+    for i in range(len(vector)):
+        if(i in change_indices):
+            A[i]=True
+        else:
+            A[i]=False
+    return A
 
+df["In"]=detect_value_change(df.dcO)
+df["Out"]=
+print(df.In)
 """
 L'objectif à terme serait d'avoir un nouveau dataframe Trades
 avec ces infos (comme dans 6-TurtleTrading.py) : 
