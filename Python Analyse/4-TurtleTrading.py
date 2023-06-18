@@ -50,8 +50,8 @@ def detect_value_change(vector):
             A[i]=False
     return A
 
-df["In"]=detect_value_change(df.dcO)
-df["Out"]=
+df["In"]=df.dcO==df.High
+df["Out"]=df.dcC==df.Low
 print(df.In)
 """
 L'objectif à terme serait d'avoir un nouveau dataframe Trades
