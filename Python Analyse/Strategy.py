@@ -8,8 +8,6 @@ from datetime import datetime
 
 # Traitement
 def traitement(df, commission = 0.06/100):
-    
-
     df["dateOut"] = df.apply(
         lambda x: (
             df
@@ -45,11 +43,11 @@ def RSI(df):
     df["RSI"] = talib.RSI(df.Close)
     df["In"] = (
         (df.RSI.shift(1) < 30) &
-        (30 > df.RSI)
+        (30 < df.RSI)
     )
     df["Out"] = (
         (df.RSI.shift(1) < 70) &
-        (70 > df.RSI)
+        (70 < df.RSI)
     )
     df["Size"] = 1
     return df
@@ -59,3 +57,15 @@ def RSI(df):
 Strategy = {
     "RSI": RSI
 }
+
+
+
+# Test
+if __name__ == "__main__":
+    ticker = "BTC-USD"
+    option = "RSI"
+    df = yf.download(tickers=ticker)
+    df.drop("Adj Close", axis=1, inplace=True)
+
+    df = Strategy[option](df)
+    df = traitement(df)
