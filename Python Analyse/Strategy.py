@@ -69,3 +69,4 @@ if __name__ == "__main__":
 
     df = Strategy[option](df)
     df = traitement(df)
+    

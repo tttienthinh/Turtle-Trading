@@ -17,7 +17,7 @@ nO = 55
 nC = 20
 
 df = yf.download(tickers='BTC-USD')
-df.drop("Adj Close", axis=1, inplace=True)
+# df.drop("Adj Close", axis=1, inplace=True)
 df["dcO"] = donchian_channel(df.High, nO, False) # Chaine de Donchian supérieur
 df["dcC"] = donchian_channel(df.Low,  nC, True)  # Chaine de Donchian inférieur
 df["atr"] = talib.ATR(df.High, df.Low, df.Close, 14) # ATR pas si important pour l'instant
