@@ -37,3 +37,9 @@ class Strategy:
         fig.savefig(f'{self.name}.pdf')
         plt.show()
 
+
+if __name__ == "__main__":
+    import pandas as pd
+    test = Strategy("test", pd.Series(np.random.random(1000)))
+    print(test.volatility())
+    # test.illustrate()
