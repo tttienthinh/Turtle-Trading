@@ -1,3 +1,5 @@
+import pandas as pd
+
 
 def donchian_channel(serie, n, lower):
     serie = pd.Series(serie)

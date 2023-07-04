@@ -14,9 +14,9 @@ class SmaCross(Strategy):
 
     def next(self):
         if crossover(self.ma1, self.ma2):
-            self.buy(size=0.999)
+            self.buy(size=0.01)
         elif crossover(self.ma2, self.ma1):
-            self.sell(size=0.999)
+            self.sell(size=0.01)
 
 # Turtle Trading
 class TurtleTrading(Strategy):
@@ -35,7 +35,7 @@ class TurtleTrading(Strategy):
         if self.dcO[-1] == self.data.High:
             size = (self.data.Close[-1]-self.dcC[-1])/(self.atr[-1]*self.factor)
             self.size.append(size)
-            self.buy(size=min(size, 0.99))
+            self.buy(size=min(size, 0.01))
         for trade in self.trades:
             if trade.is_long:
                 trade.sl = self.dcC[-1]
